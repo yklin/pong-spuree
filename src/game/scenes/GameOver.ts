@@ -1,35 +1,51 @@
 import { Scene } from 'phaser';
 
-export class GameOver extends Scene
-{
-    camera: Phaser.Cameras.Scene2D.Camera;
-    background: Phaser.GameObjects.Image;
-    gameover_text : Phaser.GameObjects.Text;
+interface GameOverData {
+    playerWon: boolean;
+    playerScore: number;
+    aiScore: number;
+}
 
-    constructor ()
-    {
+export class GameOver extends Scene {
+    constructor() {
         super('GameOver');
     }
 
-    create ()
-    {
-        this.camera = this.cameras.main
-        this.camera.setBackgroundColor(0xff0000);
+    create(data: GameOverData) {
+        const { width, height } = this.scale;
+        const cx = width / 2;
+        const cy = height / 2;
 
-        this.background = this.add.image(512, 384, 'background');
-        this.background.setAlpha(0.5);
+        this.add.rectangle(cx, cy, width, height, 0x000018);
 
-        this.gameover_text = this.add.text(512, 384, 'Game Over', {
-            fontFamily: 'Arial Black', fontSize: 64, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
-        });
-        this.gameover_text.setOrigin(0.5);
+        const title = data.playerWon ? 'YOU WIN' : 'YOU LOSE';
+        const titleColor = data.playerWon ? '#66ff66' : '#ff6666';
 
-        this.input.once('pointerdown', () => {
+        this.add
+            .text(cx, cy - 80, title, {
+                fontFamily: 'monospace',
+                fontSize: '96px',
+                color: titleColor,
+            })
+            .setOrigin(0.5);
 
-            this.scene.start('MainMenu');
+        this.add
+            .text(cx, cy + 40, `${data.playerScore} : ${data.aiScore}`, {
+                fontFamily: 'monospace',
+                fontSize: '48px',
+                color: '#ffffff',
+            })
+            .setOrigin(0.5);
 
-        });
+        this.add
+            .text(cx, cy + 160, 'Click or press SPACE to play again', {
+                fontFamily: 'monospace',
+                fontSize: '20px',
+                color: '#ffff66',
+            })
+            .setOrigin(0.5);
+
+        this.input.once('pointerdown', () => this.scene.start('MainMenu'));
+        this.input.keyboard!.once('keydown-SPACE', () => this.scene.start('MainMenu'));
     }
 }
