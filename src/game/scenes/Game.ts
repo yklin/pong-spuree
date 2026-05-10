@@ -147,13 +147,20 @@ export class Game extends Scene {
     ) => {
         const ballBody = this.ball.body as Phaser.Physics.Arcade.Body;
         const paddleBody = paddleObj.body as Phaser.Physics.Arcade.Body;
-        // Hit position relative to paddle center → deflection angle
+        // Direction is determined by which paddle was hit, not by the
+        // ball's current velocity — otherwise consecutive overlap frames
+        // (common when the AI paddle chases into the ball) flip vx every
+        // tick and the ball pins inside the paddle's AABB.
+        const dirX = paddleObj === this.playerPaddle ? 1 : -1;
         const offset = (this.ball.y - paddleBody.center.y) / (PADDLE_HEIGHT / 2);
         const clamped = Math.max(-1, Math.min(1, offset));
-        const angle = clamped * (Math.PI / 4); // up to 45°
-        const speed = BALL_BASE_SPEED * 1.05; // slight rally speedup per hit
-        const dirX = ballBody.velocity.x > 0 ? -1 : 1;
+        const angle = clamped * (Math.PI / 4);
+        const speed = BALL_BASE_SPEED * 1.05;
         ballBody.setVelocity(dirX * speed * Math.cos(angle), speed * Math.sin(angle));
+        // Nudge the ball clear of the paddle face so the next frame's
+        // overlap test doesn't re-trigger this callback.
+        if (dirX > 0) this.ball.x = paddleBody.right + BALL_RADIUS;
+        else this.ball.x = paddleBody.left - BALL_RADIUS;
     };
 
     private launchBall() {
